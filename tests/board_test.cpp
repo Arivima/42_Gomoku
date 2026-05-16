@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "board.hpp"
+#include "core/board.hpp"
 
 class BoardTest : public ::testing::Test {
 protected:

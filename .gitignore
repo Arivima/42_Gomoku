@@ -2,3 +2,6 @@
 archive/
 bin/
 obj/
+tests/bin/
+tests/obj/
+

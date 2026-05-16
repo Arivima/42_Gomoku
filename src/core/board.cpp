@@ -1,14 +1,12 @@
-#include "board.hpp"
+#include "core/board.hpp"
 
 GomokuBoard::GomokuBoard()
     : m_currentPlayer(Player::BLACK)
     , m_blackCaptures(0)
     , m_whiteCaptures(0)
     , m_moveCount(0) {
-    m_board.fill(std::array<Cell, BOARD_SIZE>{});
-    for (auto& row : m_board) {
+    for (auto& row : m_board)
         row.fill(Cell::EMPTY);
-    }
 }
 
 Cell GomokuBoard::getCell(int x, int y) const {
@@ -31,6 +29,7 @@ bool GomokuBoard::placeStone(int x, int y, Player player) {
     }
     m_board[y][x] = static_cast<Cell>(player);
     m_moveCount++;
+    m_moveHistory.push_back({x, y});
     return true;
 }
 
@@ -47,6 +46,9 @@ bool GomokuBoard::removeStone(int x, int y) {
     }
     m_board[y][x] = Cell::EMPTY;
     m_moveCount--;
+    if (!m_moveHistory.empty() && m_moveHistory.back() == Position{x, y}) {
+        m_moveHistory.pop_back();
+    }
     return true;
 }
 
@@ -62,6 +64,7 @@ void GomokuBoard::clear() {
     m_blackCaptures = 0;
     m_whiteCaptures = 0;
     m_moveCount = 0;
+    m_moveHistory.clear();
 }
 
 void GomokuBoard::addCapture(Player player, int count) {
@@ -80,6 +83,32 @@ void GomokuBoard::setCaptures(Player player, int count) {
     }
 }
 
+void GomokuBoard::removeCapturedStone(Position pos) {
+    if (!pos.isValid()) return;
+    if (m_board[pos.y][pos.x] == Cell::EMPTY) return;
+    m_board[pos.y][pos.x] = Cell::EMPTY;
+    m_moveCount--;
+}
+
+void GomokuBoard::restoreCapturedStone(Position pos, Player player) {
+    if (!pos.isValid()) return;
+    if (m_board[pos.y][pos.x] != Cell::EMPTY) return;
+    m_board[pos.y][pos.x] = playerToCell(player);
+    m_moveCount++;
+}
+
 bool GomokuBoard::isFull() const {
     return m_moveCount >= BOARD_SIZE * BOARD_SIZE;
+}
+
+std::optional<Position> GomokuBoard::getLastMove() const {
+    if (m_moveHistory.empty()) return std::nullopt;
+    return m_moveHistory.back();
+}
+
+int GomokuBoard::getMoveNumber(Position pos) const {
+    for (int i = 0; i < static_cast<int>(m_moveHistory.size()); ++i) {
+        if (m_moveHistory[i] == pos) return i + 1;
+    }
+    return 0;
 }

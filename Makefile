@@ -8,6 +8,7 @@ OBJDIR      := obj
 BINDIR		:= bin
 
 # target and files
+.DEFAULT_GOAL := all
 TARGET		:= $(BINDIR)/$(NAME)
 SOURCES		:= $(shell find $(SRCDIR) -type f -name "*.cpp")
 OBJECTS		:= $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
@@ -35,7 +36,23 @@ GREEN 		:= \033[32m
 CYAN   		:= \033[36m
 
 
+TEST_TARGET  := $(BINDIR)/GomokuTests
+TEST_SOURCES := $(shell find tests -name "*.cpp")
+CORE_SOURCES := $(filter src/core/%.cpp, $(SOURCES))
+CORE_OBJECTS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(CORE_SOURCES))
+
 all: $(TARGET)
+
+test: $(TEST_TARGET)
+	@echo "$(CYAN)Running tests$(RESET)"
+	@./$(TEST_TARGET)
+
+GTEST_ROOT  := $(shell brew --prefix googletest)
+CPPFLAGS    += -I$(GTEST_ROOT)/include
+
+$(TEST_TARGET): $(TEST_SOURCES) $(CORE_OBJECTS) | $(BINDIR)
+	@echo "$(CYAN)Compiling tests$(RESET)"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(TEST_SOURCES) $(CORE_OBJECTS) -o $@ -L$(GTEST_ROOT)/lib -lgtest -lgtest_main -lpthread
 
 $(TARGET): $(OBJECTS) | $(BINDIR)
 	@echo "$(CYAN)Linking $(TARGET)$(RESET)"
@@ -63,5 +80,5 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all run clean fclean re
+.PHONY: all run test clean fclean re
 
